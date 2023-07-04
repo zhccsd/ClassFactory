@@ -45,7 +45,7 @@ public:
     }
 
     template<typename BASE_CLASS, typename DERIVRD_CLASS>
-    void registerCtor(const KEY& key)
+    void registerClass(const KEY& key)
     {
         std::function<BASE_CLASS* (ARGS...)> f = [](ARGS... args)->BASE_CLASS* { return new(std::nothrow) DERIVRD_CLASS(args...); };
         _Base* b = new(std::nothrow) _Derived<std::function<BASE_CLASS* (ARGS...)>>(f);
@@ -57,7 +57,7 @@ public:
     }
 
     template<typename CLASS>
-    CLASS* callCtor(const KEY& key, ARGS... args)
+    CLASS* create(const KEY& key, ARGS... args)
     {
         auto iter = _d.find(key);
         if (iter == _d.end())
