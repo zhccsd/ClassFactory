@@ -69,9 +69,9 @@ public:
 int main()
 {
     ClassFactory<std::string, const std::string&> f;
-    f.registerCtor<BaseClass, FirstClass>("first");
-    f.registerCtor<BaseClass, SecondClass>("second");
-    f.registerCtor<BaseClass, ThirdClass>("third");
+    f.registerClass<BaseClass, FirstClass>("first");
+    f.registerClass<BaseClass, SecondClass>("second");
+    f.registerClass<BaseClass, ThirdClass>("third");
 
     char buffer[256];
     while (1)
@@ -91,7 +91,8 @@ int main()
         gets_s(buffer, 255);
         std::string a = buffer;
 
-        BaseClass* p = f.callCtor<BaseClass>(c, a);
+        // no more if/else and switch
+        BaseClass* p = f.create<BaseClass>(c, a);
         if (!p)
         {
             printf("class not created\n");
