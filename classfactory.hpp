@@ -4,7 +4,7 @@
 #include <map>
 #include <list>
 
-template<typename KEY>
+template<typename KEY, typename... ARGS>
 class ClassFactory
 {
 public:
@@ -44,7 +44,7 @@ public:
         return ret;
     }
 
-    template<typename BASE_CLASS, typename DERIVRD_CLASS, typename... ARGS>
+    template<typename BASE_CLASS, typename DERIVRD_CLASS>
     void registerCtor(const KEY& key)
     {
         std::function<BASE_CLASS* (ARGS...)> f = [](ARGS... args)->BASE_CLASS* { return new(std::nothrow) DERIVRD_CLASS(args...); };
@@ -56,7 +56,7 @@ public:
         _d.insert(std::make_pair(key, b));
     }
 
-    template<typename CLASS, typename... ARGS>
+    template<typename CLASS>
     CLASS* callCtor(const KEY& key, ARGS... args)
     {
         auto iter = _d.find(key);
