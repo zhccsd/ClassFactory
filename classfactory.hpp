@@ -25,6 +25,12 @@
 #include <functional>
 #include <map>
 #include <list>
+#include <type_traits>
+#include <new>
+
+#if !defined(__GXX_RTTI) && !defined(_CPPRTTI)
+#error "ClassFactory requires RTTI to be enabled."
+#endif
 
 template<typename KEY, typename... ARGS>
 class ClassFactory
@@ -38,18 +44,16 @@ public:
 
     ~ClassFactory()
     {
-        for (auto iter = _d.begin(); iter != _d.end();)
+        for (auto& pair : _registry)
         {
-            _Base* b = iter->second;
-            delete b;
-            iter = _d.erase(iter);
+            delete pair.second;
         }
     }
 
     bool exists(const KEY& key) const
     {
-        auto iter = _d.find(key);
-        if (iter == _d.end())
+        auto iter = _registry.find(key);
+        if (iter == _registry.end())
         {
             return false;
         }
@@ -59,30 +63,36 @@ public:
     std::list<KEY> keys() const
     {
         std::list<KEY> ret;
-        for (auto iter = _d.begin(); iter != _d.end(); ++iter)
+        for (auto iter = _registry.begin(); iter != _registry.end(); ++iter)
         {
             ret.push_back(iter->first);
         }
         return ret;
     }
 
-    template<typename BASE_CLASS, typename DERIVRD_CLASS>
-    void registerClass(const KEY& key)
+    template<typename BASE_CLASS, typename DERIVED_CLASS>
+    bool registerType(const KEY& key)
     {
-        std::function<BASE_CLASS* (ARGS...)> f = [](ARGS... args)->BASE_CLASS* { return new(std::nothrow) DERIVRD_CLASS(args...); };
+        static_assert(std::is_base_of<BASE_CLASS, DERIVED_CLASS>::value, "DERIVED_CLASS must be derived from BASE_CLASS");
+        if (exists(key))
+        {
+            return false;
+        }
+        std::function<BASE_CLASS* (ARGS...)> f = [](ARGS... args)->BASE_CLASS* { return new(std::nothrow) DERIVED_CLASS(args...); };
         _Base* b = new(std::nothrow) _Derived<std::function<BASE_CLASS* (ARGS...)>>(f);
         if (nullptr == b)
         {
-            return;
+            return false;
         }
-        _d.insert(std::make_pair(key, b));
+        _registry.insert(std::make_pair(key, b));
+        return true;
     }
 
     template<typename CLASS>
     CLASS* create(const KEY& key, ARGS... args)
     {
-        auto iter = _d.find(key);
-        if (iter == _d.end())
+        auto iter = _registry.find(key);
+        if (iter == _registry.end())
         {
             return nullptr;
         }
@@ -109,7 +119,7 @@ private:
         _Derived(const CTOR& f) : _ctor(f) {}
     };
 
-    std::map<KEY, _Base*> _d;
+    std::map<KEY, _Base*> _registry;
 };
 
 #endif

@@ -1,4 +1,5 @@
-#include <stdio.h>
+#include <cstdio>
+#include <cstring>
 #include "classfactory.hpp"
 #include <string>
 
@@ -33,7 +34,7 @@ public:
 
     void sayHello() const override
     {
-        printf("hello from FirstClass\n");
+        printf("Hello from FirstClass\n");
         printArg();
     }
 };
@@ -47,7 +48,7 @@ public:
 
     void sayHello() const override
     {
-        printf("hello from SecondClass\n");
+        printf("Hello from SecondClass\n");
         printArg();
     }
 };
@@ -61,45 +62,44 @@ public:
 
     void sayHello() const override
     {
-        printf("hello from ThirdClass\n");
+        printf("Hello from ThirdClass\n");
         printArg();
     }
 };
 
 int main()
 {
-    ClassFactory<std::string, const std::string&> f;
-    f.registerClass<BaseClass, FirstClass>("first");
-    f.registerClass<BaseClass, SecondClass>("second");
-    f.registerClass<BaseClass, ThirdClass>("third");
+    ClassFactory<std::string, const std::string&> factory;
+    factory.registerType<BaseClass, FirstClass>("first");
+    factory.registerType<BaseClass, SecondClass>("second");
+    factory.registerType<BaseClass, ThirdClass>("third");
 
     char buffer[256];
-    while (1)
+    while (true)
     {
-        printf("class you want to create?");
+        printf("Which class to create? ");
         memset(buffer, 0, 256);
         gets_s(buffer, 255);
-        std::string c = buffer;
-        if (!f.exists(c))
+        std::string className = buffer;
+        if (!factory.exists(className))
         {
-            printf("class not exists\n");
+            printf("Class not found\n");
             continue;
         }
 
-        printf("arg for class %s?", c.c_str());
+        printf("Arg for class %s? ", className.c_str());
         memset(buffer, 0, 256);
         gets_s(buffer, 255);
-        std::string a = buffer;
+        std::string arg = buffer;
 
-        // no more if/else and switch
-        BaseClass* p = f.create<BaseClass>(c, a);
-        if (!p)
+        BaseClass* instance = factory.create<BaseClass>(className, arg);
+        if (!instance)
         {
-            printf("class not created\n");
+            printf("Failed to create class\n");
             continue;
         }
-        p->sayHello();
-        delete p;
+        instance->sayHello();
+        delete instance;
     }
 
     return 0;
